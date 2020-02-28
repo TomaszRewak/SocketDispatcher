@@ -9,18 +9,24 @@ namespace SocketDispatcher
 {
 	public class SocketConnection
 	{
+		private readonly WinSock _winSock;
 		private readonly Socket _socket;
 		private readonly int _handle;
 
-
 		public SocketConnection(string host, int port)
 		{
-			handle = 
+			_winSock = WinSock.Current;
 
-			var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			socket.Connect(host, port);
+			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			_socket.Connect(host, port);
 
-			WSAAsyncSelect(socket.Handle.ToInt32(), )
+			_handle = 0;
+
+			WinSock.SelectAsync(_socket, _handle, 0, WinSock.NetworkEvents.Read | WinSock.NetworkEvents.Write);
+
+			_socket.Send()
+
+			WSAAsyncSelect(_socket.Handle.ToInt32(), _handle, )
 
 
 			ComponentDispatcher.ThreadFilterMessage += ThreadFilterMessage;
@@ -43,19 +49,16 @@ namespace SocketDispatcher
 			socket.ReceiveAsync(args);
 		}
 
+		internal IntPtr Handle => _socket.Handle;
+
 		private void ThreadFilterMessage(ref MSG msg, ref bool handled)
 		{
-			if (msg)
+			if (msg.)
 		}
-
-
 
 		private void Args_Completed(object sender, SocketAsyncEventArgs e)
 		{
 			e.
 		}
-
-		[DllImport("wsock32.dll")]
-		public static extern int WSAAsyncSelect(int socket, int hWnd, int wMsg, int lEvent);
 	}
 }
