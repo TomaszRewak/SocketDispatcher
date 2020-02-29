@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29503.13
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketDispatcher", "SocketDispatcher\SocketDispatcher.csproj", "{2A176F33-F2E4-4125-AAF2-2896C46C32F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketDispatcher", "SocketDispatcher\SocketDispatcher.csproj", "{2A176F33-F2E4-4125-AAF2-2896C46C32F5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketDispatcher.Test", "SocketDispatcher.Test\SocketDispatcher.Test.csproj", "{80060C2F-DD32-4D35-9F75-30DE7ED1C5CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{2A176F33-F2E4-4125-AAF2-2896C46C32F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A176F33-F2E4-4125-AAF2-2896C46C32F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A176F33-F2E4-4125-AAF2-2896C46C32F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80060C2F-DD32-4D35-9F75-30DE7ED1C5CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80060C2F-DD32-4D35-9F75-30DE7ED1C5CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80060C2F-DD32-4D35-9F75-30DE7ED1C5CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80060C2F-DD32-4D35-9F75-30DE7ED1C5CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
