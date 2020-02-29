@@ -31,20 +31,13 @@ namespace SocketDispatcher
 			_writeBuffer = new WriteBuffer();
 		}
 
+		protected void Write(int bytes) => _writeBuffer.Write(bytes);
+
 		protected abstract int Read(ReadOnlySpan<byte> data);
 		protected abstract int OnConnected();
 		protected abstract int OnDisconnected();
 
-		internal void Read()
-		{
-			var buffer = _readBuffer.Write(_socket.Available);
-			_socket.Receive(buffer);
-
-			var bytes = Read(buffer);
-			_readBuffer.Pop(bytes);
-		}
-
-		internal void Flush()
+		protected void Flush()
 		{
 			int bytes = 0;
 
@@ -61,16 +54,13 @@ namespace SocketDispatcher
 			_writeBuffer.Pop(bytes);
 		}
 
-		private void ThreadFilterMessage(ref MSG msg, ref bool handled)
+		internal void Read()
 		{
-			if (msg.)
-		}
+			var buffer = _readBuffer.Write(_socket.Available);
+			_socket.Receive(buffer);
 
-		private void Args_Completed(object sender, SocketAsyncEventArgs e)
-		{
-			e.
+			var bytes = Read(buffer);
+			_readBuffer.Pop(bytes);
 		}
-
-		public event int Readable()
 	}
 }

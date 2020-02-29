@@ -44,6 +44,8 @@ namespace SocketDispatcher
 			}
 		}
 
+		public bool Empty => _start == _end;
+
 		public Span<byte> Write(int bytes)
 		{
 			if (_end >= _start && _end + bytes < _length)
