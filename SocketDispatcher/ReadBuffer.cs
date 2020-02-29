@@ -9,7 +9,7 @@ namespace SocketDispatcher
 		private byte[] _buffer = new byte[0];
 		private int _length = 0;
 
-		public Span<byte> Push(int bytes)
+		public Span<byte> Write(int bytes)
 		{
 			Reserve(bytes);
 
