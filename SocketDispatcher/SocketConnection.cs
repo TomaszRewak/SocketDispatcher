@@ -7,49 +7,35 @@ using System.Windows.Threading;
 
 namespace SocketDispatcher
 {
-	public class SocketConnection
+	public abstract class SocketConnection
 	{
 		private readonly WinSock _winSock;
 		private readonly Socket _socket;
-		private readonly int _handle;
+
+		internal IntPtr Handle => _socket.Handle;
 
 		public SocketConnection(string host, int port)
 		{
-			_winSock = WinSock.Current;
-
 			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			_socket.Connect(host, port);
 
-			_handle = 0;
-
-			WinSock.SelectAsync(_socket, _handle, 0, WinSock.NetworkEvents.Read | WinSock.NetworkEvents.Write);
-
-			_socket.Send()
-
-			WSAAsyncSelect(_socket.Handle.ToInt32(), _handle, )
-
-
-			ComponentDispatcher.ThreadFilterMessage += ThreadFilterMessage;
-
-
-
-
-			var result = socket.ReceiveAsync((new int[10]).AsMemory<int>(), SocketFlags.None);
-
-			if (socket.Poll(100, SelectMode.SelectRead))
-				socket.
-
-			ArraySegment<byte> array;
-
-			SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-			args.ConnectSocket = socket;
-			args.
-			args.Completed += Args_Completed;
-
-			socket.ReceiveAsync(args);
+			_winSock = WinSock.Current;
+			_winSock.Add(this);
 		}
 
-		internal IntPtr Handle => _socket.Handle;
+		protected abstract int Read(ReadOnlySpan<byte> data);
+		protected abstract int OnConnected();
+		protected abstract int OnDisconnected();
+
+		internal void Read()
+		{
+			_socket.Available
+		}
+
+		private void Flush()
+		{
+
+		}
 
 		private void ThreadFilterMessage(ref MSG msg, ref bool handled)
 		{
@@ -60,5 +46,7 @@ namespace SocketDispatcher
 		{
 			e.
 		}
+
+		public event int Readable()
 	}
 }
