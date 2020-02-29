@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Windows;
 using System.Windows.Interop;
 
 namespace SocketDispatcher
@@ -14,17 +15,21 @@ namespace SocketDispatcher
 		private static WinSock _current;
 		public static WinSock Current => _current ?? (_current = new WinSock());
 
+		private WindowInteropHelper _messageHendler;
 		private IDictionary<IntPtr, SocketConnection> _sockets = new Dictionary<IntPtr, SocketConnection>();
 
 		private WinSock()
 		{
 			ComponentDispatcher.ThreadFilterMessage += ThreadFilterMessage;
+
+			_messageHendler = new WindowInteropHelper(new Window());
+			_messageHendler.EnsureHandle();
 		}
 
 		private void ThreadFilterMessage(ref MSG msg, ref bool handled)
 		{
-			if (msg.hwnd != IntPtr.Zero) return;
-			if (_sockets.TryGetValue(msg.wParam, out var socket)) return;
+			if (msg.hwnd != _messageHendler.Handle) return;
+			if (!_sockets.TryGetValue(msg.wParam, out var socket)) return;
 
 			var events = (NetworkEvents)(msg.lParam.ToInt32() & 0b1111_1111_1111_1111);
 			var errors = msg.lParam.ToInt32() >> 16;
@@ -53,7 +58,12 @@ namespace SocketDispatcher
 		public void Add(SocketConnection socket)
 		{
 			_sockets.Add(socket.Handle, socket);
-			SelectAsync(socket.Handle, NetworkEvents.Read | NetworkEvents.Write | NetworkEvents.Accept);
+			var result = SelectAsync(socket.Handle, NetworkEvents.Read | NetworkEvents.Write | NetworkEvents.Accept);
+
+			if (result != 0)
+			{
+				throw new SocketException(WSAGetLastError());
+			}
 		}
 
 		[Flags]
@@ -72,8 +82,12 @@ namespace SocketDispatcher
 			MaxEvents = 0b11_1111_1111
 		}
 
+
+		[DllImport("wsock32.dll")]
+		private static extern int WSAGetLastError();
 		[DllImport("wsock32.dll")]
 		private static extern int WSAAsyncSelect(IntPtr socket, IntPtr hWnd, int wMsg, int lEvent);
-		private static int SelectAsync(IntPtr socketHandle, NetworkEvents events) => WSAAsyncSelect(socketHandle, IntPtr.Zero, 0, (int)events);
+
+		private int SelectAsync(IntPtr socketHandle, NetworkEvents events) => WSAAsyncSelect(socketHandle, _messageHendler.Handle, 0, (int)events);
 	}
 }
