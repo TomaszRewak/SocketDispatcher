@@ -31,27 +31,16 @@ namespace SocketDispatcher
 			_writeBuffer = new WriteBuffer();
 		}
 
-		protected void Write(int bytes) => _writeBuffer.Write(bytes);
+		protected Span<byte> Write(int bytes) => _writeBuffer.Write(bytes);
 
 		protected abstract int Read(ReadOnlySpan<byte> data);
 		protected abstract int OnConnected();
 		protected abstract int OnDisconnected();
 
-		protected void Flush()
+		protected internal void Flush()
 		{
-			int bytes = 0;
-
-			foreach(var chunk in _writeBuffer)
-			{
-				int sentBytes = _socket.Send(chunk);
-
-				if (sentBytes == 0)
-					break;
-				else
-					bytes += sentBytes;
-			}
-
-			_writeBuffer.Pop(bytes);
+			int sentBytes = _socket.Send(_writeBuffer.Read());
+			_writeBuffer.Pop(sentBytes);
 		}
 
 		internal void Read()
@@ -59,8 +48,8 @@ namespace SocketDispatcher
 			var buffer = _readBuffer.Write(_socket.Available);
 			_socket.Receive(buffer);
 
-			var bytes = Read(buffer);
-			_readBuffer.Pop(bytes);
+			var processedBytes = Read(_readBuffer.Read());
+			_readBuffer.Pop(processedBytes);
 		}
 	}
 }

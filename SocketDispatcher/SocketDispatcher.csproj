@@ -5,4 +5,8 @@
 		<UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net471' ">
+    <PackageReference Include="System.Memory" Version="4.5.3" />
+  </ItemGroup>
+
 </Project>

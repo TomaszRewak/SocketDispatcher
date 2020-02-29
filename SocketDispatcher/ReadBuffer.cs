@@ -6,16 +6,19 @@ namespace SocketDispatcher
 {
 	internal sealed class ReadBuffer
 	{
+		private readonly List<ArraySegment<byte>> _segments = new List<ArraySegment<byte>> { new ArraySegment<byte>() };
+
 		private byte[] _buffer = new byte[0];
 		private int _length = 0;
 
-		public Span<byte> Write(int bytes)
+		public List<ArraySegment<byte>> Write(int bytes)
 		{
 			Reserve(bytes);
 
+			_segments[0] = new ArraySegment<byte>(_buffer, _length, bytes);
 			_length += bytes;
 
-			return _buffer.AsSpan(_length - bytes, bytes);
+			return _segments;
 		}
 
 		public ReadOnlySpan<byte> Read()

@@ -6,45 +6,30 @@ namespace SocketDispatcher
 {
 	internal sealed class WriteBuffer
 	{
+		private readonly List<ArraySegment<byte>> _segments = new List<ArraySegment<byte>> { new ArraySegment<byte>(), new ArraySegment<byte>() };
+
 		private byte[] _buffer = new byte[0];
 		private int _length = 0;
 		private int _start = 0;
 		private int _end = 0;
 
-		public ref struct Enumerator
-		{
-			private readonly WriteBuffer _buffer;
-			private int _section;
-
-			public Enumerator(WriteBuffer buffer)
-			{
-				_buffer = buffer;
-				_section = -1;
-			}
-
-			public bool MoveNext()
-			{
-				_section++;
-
-				if (_section == 0 && _buffer._end != _buffer._start) return true;
-				if (_section == 1 && _buffer._end < _buffer._start) return true;
-				return false;
-			}
-
-			public ReadOnlySpan<byte> Current
-			{
-				get
-				{
-					if (_section == 1) return _buffer._buffer.AsSpan(0, _buffer._end);
-
-					return _buffer._end >= _buffer._start
-						? _buffer._buffer.AsSpan(_buffer._start, _buffer._end - _buffer._start)
-						: _buffer._buffer.AsSpan(_buffer._start, _buffer._length - _buffer._start);
-				}
-			}
-		}
-
 		public bool Empty => _start == _end;
+
+		public List<ArraySegment<byte>> Read()
+		{
+			if (_end >= _start)
+			{
+				_segments[0] = new ArraySegment<byte>(_buffer, _start, _end - _start);
+				_segments[1] = new ArraySegment<byte>();
+			}
+			else
+			{
+				_segments[0] = new ArraySegment<byte>(_buffer, _end, _length - _end);
+				_segments[1] = new ArraySegment<byte>(_buffer, 0, _end);
+			}
+
+			return _segments;
+		}
 
 		public Span<byte> Write(int bytes)
 		{
@@ -106,11 +91,6 @@ namespace SocketDispatcher
 			}
 
 			_start = bytes - (_length - _start);
-		}
-
-		public Enumerator GetEnumerator()
-		{
-			return new Enumerator(this);
 		}
 	}
 }
