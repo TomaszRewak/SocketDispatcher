@@ -6,17 +6,18 @@ namespace SocketDispatcher.Test
 	public class Tests
 	{
 		[Test]
-		public void Test1()
+		public void ConnectsToAValidPort()
 		{
-			var socket1 = MockSocket(9090);
-			var socket2 = MockSocket(9090);
+			var publisherSocket = new Mock<SocketConnection>().Object;
 
-			
-		}
+			SocketConnection acceptedSocket;
+			publisherSocket.Accepted += (p, s) => acceptedSocket = new Mock<SocketConnection>(s).Object;
+			publisherSocket.Listen(9090);
 
-		private Mock<SocketConnection> MockSocket(int port)
-		{
-			return new Mock<SocketConnection>("127.0.0.1", port);
+			var listenerSocket = new Mock<SocketConnection>().Object;
+			listenerSocket.Connect("127.0.0.1", 9090);
+
+			Assert.IsTrue(listenerSocket.Connected);
 		}
 	}
 }

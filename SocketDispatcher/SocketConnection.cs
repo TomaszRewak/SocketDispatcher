@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -15,14 +16,15 @@ namespace SocketDispatcher
 		private readonly WriteBuffer _writeBuffer;
 
 		internal IntPtr Handle => _socket.Handle;
+		public bool Connected { get; internal set; }
 
-		public SocketConnection(string host, int port)
+		public SocketConnection() : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+		{ }
+
+		public SocketConnection(Socket socket)
 		{
-			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
-			{
-				Blocking = false
-			};
-			_socket.Connect(host, port);
+			_socket = socket;
+			_socket.Blocking = true;
 
 			_winSock = WinSock.Current;
 			_winSock.Add(this);
@@ -31,11 +33,14 @@ namespace SocketDispatcher
 			_writeBuffer = new WriteBuffer();
 		}
 
-		protected Span<byte> Write(int bytes) => _writeBuffer.Write(bytes);
+		public void Listen(int port) => _socket.Bind(new IPEndPoint(IPAddress.Any, port));
+		public void Connect(string host, int port) => _socket.ConnectAsync(host, port);
 
 		protected abstract int Read(ReadOnlySpan<byte> data);
 		protected abstract int OnConnected();
 		protected abstract int OnDisconnected();
+
+		protected Span<byte> Write(int bytes) => _writeBuffer.Write(bytes);
 
 		protected internal void Flush()
 		{
@@ -51,5 +56,17 @@ namespace SocketDispatcher
 			var processedBytes = Read(_readBuffer.Read());
 			_readBuffer.Pop(processedBytes);
 		}
+
+		internal void Accept()
+		{
+			var socket = _socket.Accept();
+
+			if (Accepted == null)
+				socket.Disconnect(false);
+			else
+				Accepted?.Invoke(this, socket);
+		}
+
+		public event Action<SocketConnection, Socket> Accepted;
 	}
 }

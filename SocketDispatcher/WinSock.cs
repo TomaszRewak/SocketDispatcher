@@ -37,7 +37,14 @@ namespace SocketDispatcher
 				case NetworkEvents.Write:
 					socket.Flush();
 					break;
+				case NetworkEvents.Accept:
+					socket.Accept();
+					break;
+				case NetworkEvents.Connect:
+					socket.Connected = true;
+					break;
 				case NetworkEvents.Close:
+					socket.Connected = false;
 					break;
 				default: break;
 			}
@@ -46,7 +53,7 @@ namespace SocketDispatcher
 		public void Add(SocketConnection socket)
 		{
 			_sockets.Add(socket.Handle, socket);
-			SelectAsync(socket.Handle, NetworkEvents.Read | NetworkEvents.Write);
+			SelectAsync(socket.Handle, NetworkEvents.Read | NetworkEvents.Write | NetworkEvents.Accept);
 		}
 
 		[Flags]
