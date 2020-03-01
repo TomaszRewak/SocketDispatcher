@@ -26,7 +26,7 @@ namespace SocketDispatcher
 			_socket = socket;
 
 			_winSock = WinSock.Current;
-			//_winSock.Add(this);
+			_winSock.Add(this);
 
 			_readBuffer = new ReadBuffer();
 			_writeBuffer = new WriteBuffer();
@@ -36,12 +36,10 @@ namespace SocketDispatcher
 		{
 			_socket.Bind(new IPEndPoint(IPAddress.Any, port));
 			_socket.Listen(100);
-			_winSock.Add(this);
 		}
 		public void Connect(string host, int port)
 		{
-			_socket.Connect(host, port);
-			_winSock.Add(this);
+			_socket.BeginConnect(host, port, null, null);
 		}
 
 		protected abstract int Read(ReadOnlySpan<byte> data);
