@@ -9,6 +9,8 @@ namespace SocketDispatcher.Test
 {
 	internal class DummySocketConnection : SocketConnection
 	{
+		public byte[] LastMessage { get; private set; }
+
 		public DummySocketConnection()
 		{ }
 		public DummySocketConnection(Socket socket) : base(socket)
@@ -16,7 +18,12 @@ namespace SocketDispatcher.Test
 
 		protected override int OnConnected() => 0;
 		protected override int OnDisconnected() => 0;
-		protected override int Read(ReadOnlySpan<byte> data) => data.Length;
+		protected override int Read(ReadOnlySpan<byte> data)
+		{
+			LastMessage = data.ToArray();
+
+			return data.Length;
+		}
 	}
 
 	[TestFixture]
@@ -26,8 +33,8 @@ namespace SocketDispatcher.Test
 		public void ConnectsToAValidPort()
 		{
 			Dispatcher dispatcher = null;
-			SocketConnection listenerSocket = null;
-			SocketConnection acceptedSocket = null;
+			DummySocketConnection listenerSocket = null;
+			DummySocketConnection acceptedSocket = null;
 			DummySocketConnection publisherSocket = null;
 
 			var thread = new Thread(() =>
@@ -41,27 +48,37 @@ namespace SocketDispatcher.Test
 
 			Thread.Sleep(1000);
 
-			dispatcher.Invoke(() => {
+			dispatcher.Invoke(() =>
+			{
 				publisherSocket = new DummySocketConnection();
 				publisherSocket.Accepted += (p, s) => acceptedSocket = new DummySocketConnection(s);
 				publisherSocket.Listen(9090);
-				Console.WriteLine("aaa");
 			});
 
 			Thread.Sleep(2000);
 
-			dispatcher.Invoke(() => {
+			dispatcher.Invoke(() =>
+			{
 				listenerSocket = new DummySocketConnection();
 				listenerSocket.Connect("localhost", 9090);
-				Console.WriteLine("bbb");
 			});
 
 			Thread.Sleep(2000);
 
-			Console.WriteLine("ddd");
+			dispatcher.Invoke(() =>
+			{
+				var buffer = acceptedSocket.Write(3);
+				buffer[0] = 1;
+				buffer[1] = 2;
+				buffer[2] = 3;
+				acceptedSocket.Flush();
+			});
+
+			Thread.Sleep(2000);
 
 			Assert.IsNotNull(acceptedSocket);
 			Assert.IsTrue(listenerSocket.Connected);
+			CollectionAssert.AreEqual(new byte[] { 1, 2, 3 }, listenerSocket.LastMessage);
 		}
 	}
 }

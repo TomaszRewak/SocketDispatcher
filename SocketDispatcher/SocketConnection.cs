@@ -48,9 +48,9 @@ namespace SocketDispatcher
 		protected abstract int OnConnected();
 		protected abstract int OnDisconnected();
 
-		protected Span<byte> Write(int bytes) => _writeBuffer.Write(bytes);
+		public Span<byte> Write(int bytes) => _writeBuffer.Write(bytes);
 
-		protected internal void Flush()
+		public void Flush()
 		{
 			int sentBytes = _socket.Send(_writeBuffer.Read());
 			_writeBuffer.Pop(sentBytes);
