@@ -20,7 +20,7 @@ namespace SocketDispatcher
 			if (_end >= _start)
 			{
 				_segments[0] = new ArraySegment<byte>(_buffer, _start, _end - _start);
-				_segments[1] = new ArraySegment<byte>();
+				_segments[1] = new ArraySegment<byte>(_buffer, 0, 0);
 			}
 			else
 			{

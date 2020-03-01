@@ -21,9 +21,18 @@ namespace SocketDispatcher
 		private WinSock()
 		{
 			ComponentDispatcher.ThreadFilterMessage += ThreadFilterMessage;
+			ComponentDispatcher.ThreadPreprocessMessage += ThreadPreprocessMessage;
 
 			_messageHendler = new WindowInteropHelper(new Window());
 			_messageHendler.EnsureHandle();
+		}
+
+		private void ThreadPreprocessMessage(ref MSG msg, ref bool handled)
+		{
+			if (msg.hwnd != _messageHendler.Handle) return;
+			if (msg.message != 12345) return;
+
+			Console.WriteLine("");
 		}
 
 		private void ThreadFilterMessage(ref MSG msg, ref bool handled)
@@ -47,10 +56,10 @@ namespace SocketDispatcher
 					socket.Accept();
 					break;
 				case NetworkEvents.Connect:
-					socket.Connected = true;
+					//socket.Connected = true;
 					break;
 				case NetworkEvents.Close:
-					socket.Connected = false;
+					//socket.Connected = false;
 					break;
 				default: break;
 			}
@@ -79,8 +88,7 @@ namespace SocketDispatcher
 			Qos = 0b00_0100_0000,
 			GroupQos = 0b00_1000_0000,
 			RoutingInterfaceChange = 0b01_0000_0000,
-			AddressListChange = 0b10_0000_0000,
-			MaxEvents = 0b11_1111_1111
+			AddressListChange = 0b10_0000_0000
 		}
 
 

@@ -16,7 +16,7 @@ namespace SocketDispatcher
 		private readonly WriteBuffer _writeBuffer;
 
 		internal IntPtr Handle => _socket.Handle;
-		public bool Connected { get; internal set; }
+		public bool Connected => _socket.Connected;
 
 		public SocketConnection() : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 		{ }
@@ -24,17 +24,25 @@ namespace SocketDispatcher
 		public SocketConnection(Socket socket)
 		{
 			_socket = socket;
-			_socket.Blocking = true;
 
 			_winSock = WinSock.Current;
-			_winSock.Add(this);
+			//_winSock.Add(this);
 
 			_readBuffer = new ReadBuffer();
 			_writeBuffer = new WriteBuffer();
 		}
 
-		public void Listen(int port) => _socket.Bind(new IPEndPoint(IPAddress.Any, port));
-		public void Connect(string host, int port) => _socket.ConnectAsync(host, port);
+		public void Listen(int port)
+		{
+			_socket.Bind(new IPEndPoint(IPAddress.Any, port));
+			_socket.Listen(100);
+			_winSock.Add(this);
+		}
+		public void Connect(string host, int port)
+		{
+			_socket.Connect(host, port);
+			_winSock.Add(this);
+		}
 
 		protected abstract int Read(ReadOnlySpan<byte> data);
 		protected abstract int OnConnected();
