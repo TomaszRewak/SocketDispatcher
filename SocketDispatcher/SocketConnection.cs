@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Windows.Interop;
 using System.Windows.Threading;
 
 namespace SocketDispatcher
@@ -11,12 +8,12 @@ namespace SocketDispatcher
 	public abstract class SocketConnection
 	{
 		private readonly Socket _socket;
+		private readonly Dispatcher _dispatcher;
 		private readonly WinSock _winSock;
 		private readonly SocketBuffer _readBuffer;
 		private readonly SocketBuffer _writeBuffer;
 
 		internal IntPtr Handle => _socket.Handle;
-		public bool Connected => _socket.Connected;
 
 		protected SocketConnection() : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 		{ }
@@ -25,6 +22,7 @@ namespace SocketDispatcher
 		{
 			_socket = socket;
 
+			_dispatcher = Dispatcher.CurrentDispatcher;
 			_winSock = WinSock.Current;
 			_winSock.Add(this);
 
@@ -32,19 +30,19 @@ namespace SocketDispatcher
 			_writeBuffer = new SocketBuffer();
 		}
 
-		public void Listen(int port, int maxPendingConnections = 100)
+		protected void Listen(int port, int maxPendingConnections = 100)
 		{
 			_socket.Bind(new IPEndPoint(IPAddress.Any, port));
 			_socket.Listen(maxPendingConnections);
 		}
 
-		public void Connect(string host, int port)
+		protected void Connect(string host, int port)
 		{
-			_socket.BeginConnect(host, port, null, null);
+			_socket.ConnectAsync(host, port).ContinueWith(t => { _dispatcher.BeginInvoke(OnConnected); });
 		}
 
-		protected virtual void OnConnected() { }
-		protected virtual void OnDisconnected() { }
+		protected internal virtual void OnConnected() { }
+		protected internal virtual void OnDisconnected() { }
 		protected virtual void OnAccepted(Socket socket)
 		{
 			socket.BeginDisconnect(false, null, null);

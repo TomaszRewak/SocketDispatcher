@@ -21,18 +21,9 @@ namespace SocketDispatcher
 		private WinSock()
 		{
 			ComponentDispatcher.ThreadFilterMessage += ThreadFilterMessage;
-			ComponentDispatcher.ThreadPreprocessMessage += ThreadPreprocessMessage;
 
 			_messageHendler = new WindowInteropHelper(new Window());
 			_messageHendler.EnsureHandle();
-		}
-
-		private void ThreadPreprocessMessage(ref MSG msg, ref bool handled)
-		{
-			if (msg.hwnd != _messageHendler.Handle) return;
-			if (msg.message != 12345) return;
-
-			Console.WriteLine("");
 		}
 
 		private void ThreadFilterMessage(ref MSG msg, ref bool handled)
@@ -55,14 +46,13 @@ namespace SocketDispatcher
 				case NetworkEvents.Accept:
 					socket.Accept();
 					break;
-				case NetworkEvents.Connect:
-					//socket.Connected = true;
-					break;
 				case NetworkEvents.Close:
-					//socket.Connected = false;
+					socket.OnDisconnected();
 					break;
 				default: break;
 			}
+
+			handled = true;
 		}
 
 		public void Add(SocketConnection socket)
