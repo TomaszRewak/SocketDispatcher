@@ -12,52 +12,58 @@ namespace SocketDispatcher
 	{
 		private readonly Socket _socket;
 		private readonly WinSock _winSock;
-		private readonly ReadBuffer _readBuffer;
-		private readonly WriteBuffer _writeBuffer;
+		private readonly SocketBuffer _readBuffer;
+		private readonly SocketBuffer _writeBuffer;
 
 		internal IntPtr Handle => _socket.Handle;
 		public bool Connected => _socket.Connected;
 
-		public SocketConnection() : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+		protected SocketConnection() : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 		{ }
 
-		public SocketConnection(Socket socket)
+		protected SocketConnection(Socket socket)
 		{
 			_socket = socket;
 
 			_winSock = WinSock.Current;
 			_winSock.Add(this);
 
-			_readBuffer = new ReadBuffer();
-			_writeBuffer = new WriteBuffer();
+			_readBuffer = new SocketBuffer();
+			_writeBuffer = new SocketBuffer();
 		}
 
-		public void Listen(int port)
+		public void Listen(int port, int maxPendingConnections = 100)
 		{
 			_socket.Bind(new IPEndPoint(IPAddress.Any, port));
-			_socket.Listen(100);
+			_socket.Listen(maxPendingConnections);
 		}
+
 		public void Connect(string host, int port)
 		{
 			_socket.BeginConnect(host, port, null, null);
 		}
 
-		protected abstract int Read(ReadOnlySpan<byte> data);
-		protected abstract int OnConnected();
-		protected abstract int OnDisconnected();
+		protected virtual void OnConnected() { }
+		protected virtual void OnDisconnected() { }
+		protected virtual void OnAccepted(Socket socket)
+		{
+			socket.BeginDisconnect(false, null, null);
+		}
 
-		public Span<byte> Write(int bytes) => _writeBuffer.Write(bytes);
+		protected virtual int Read(ReadOnlySpan<byte> data) => data.Length;
+		protected Span<byte> Write(int bytes) => _writeBuffer.Write(bytes);
 
 		public void Flush()
 		{
-			int sentBytes = _socket.Send(_writeBuffer.Read());
+			_writeBuffer.Read(out var segment);
+			int sentBytes = _socket.Send(segment.Array, segment.Offset, segment.Count, SocketFlags.None);
 			_writeBuffer.Pop(sentBytes);
 		}
 
 		internal void Read()
 		{
-			var buffer = _readBuffer.Write(_socket.Available);
-			_socket.Receive(buffer);
+			_readBuffer.Write(_socket.Available, out var buffer);
+			_socket.Receive(buffer.Array, buffer.Offset, buffer.Count, SocketFlags.None);
 
 			var processedBytes = Read(_readBuffer.Read());
 			_readBuffer.Pop(processedBytes);
@@ -65,14 +71,7 @@ namespace SocketDispatcher
 
 		internal void Accept()
 		{
-			var socket = _socket.Accept();
-
-			if (Accepted == null)
-				socket.Disconnect(false);
-			else
-				Accepted?.Invoke(this, socket);
+			OnAccepted(_socket.Accept());
 		}
-
-		public event Action<SocketConnection, Socket> Accepted;
 	}
 }
