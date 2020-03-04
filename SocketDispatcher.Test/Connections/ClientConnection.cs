@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SocketDispatcher.Test.Connections
 {
-	internal sealed class ClientConnection : SocketConnection
+	internal sealed class ClientConnection : BaseConnection
 	{
 		public ClientConnection(Socket socket) : base(socket)
 		{ }

@@ -11,41 +11,34 @@ using System.Windows.Threading;
 namespace SocketDispatcher.Test
 {
 	[TestFixture]
-	public class SocketConnectionTest
+	public partial class SocketConnectionTest
 	{
 		[Test]
-		public void ConnectsToAValidPort()
+		public void ClientConnectsToAValidServer()
 		{
-			var dispatcher = DispatcherHelper.Spawn();
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090);
 
-			ServerConnection serverSocket = null;
-			RemoteConnection remoteSocket = null;
-			ClientConnection clientSocket = null;
+			AssertClientsConnected();
+		}
 
-			dispatcher.Invoke(() =>
-			{
-				serverSocket = new ServerConnection(9090);
-			});
-			serverSocket.Accepted += s => clientSocket = s;
+		[Test]
+		public void ClientDoesntConnectsToUnexistentServer()
+		{
+			StartClient(9090);
 
-			ThreadHelper.Await(ref serverSocket);
+			AssertClientsFailedToConnect();
+		}
 
-			dispatcher.Invoke(() =>
-			{
-				remoteSocket = new RemoteConnection("localhost", 9090);
-			});
+		[Test]
+		public void ClientDisconnectsFromDisconnectedServer()
+		{
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090);
 
-			ThreadHelper.Await(ref remoteSocket);
-			ThreadHelper.Await(ref clientSocket);
-
-			dispatcher.Invoke(() =>
-			{
-				clientSocket.Send(new byte[] { 1, 2, 3 });
-			});
-
-			ThreadHelper.Await(ref remoteSocket.LastMessage);
-
-			CollectionAssert.AreEqual(new byte[] { 1, 2, 3 }, remoteSocket.LastMessage);
+			AssertClientsConnected();
+			StopServers();
+			AssertClientsNotConnected();
 		}
 	}
 }

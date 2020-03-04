@@ -4,9 +4,8 @@ using System.Text;
 
 namespace SocketDispatcher.Test.Connections
 {
-	internal sealed class RemoteConnection : SocketConnection
+	internal sealed class RemoteConnection : BaseConnection
 	{
-		public bool Connected;
 		public byte[] LastMessage;
 
 		public RemoteConnection(string host, int port)
@@ -19,8 +18,5 @@ namespace SocketDispatcher.Test.Connections
 			LastMessage = data.ToArray();
 			return data.Length;
 		}
-
-		protected override void OnConnected() => Connected = true;
-		protected override void OnDisconnected() => Connected = false;
 	}
 }

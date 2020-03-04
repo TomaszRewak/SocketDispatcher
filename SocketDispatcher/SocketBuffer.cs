@@ -51,7 +51,7 @@ namespace SocketDispatcher
 			else
 			{
 				var newBuffer = new byte[(_length + bytes) * 2];
-				Buffer.BlockCopy(_buffer, 0, newBuffer, 0, _length);
+				Buffer.BlockCopy(_buffer, _start, newBuffer, 0, _length);
 				_buffer = newBuffer;
 			}
 		}

@@ -5,18 +5,41 @@ using System.Text;
 
 namespace SocketDispatcher.Test.Connections
 {
-	internal sealed class ServerConnection : SocketConnection
+	internal sealed class ServerConnection : BaseConnection
 	{
+		private bool _accpetsClients = true;
+
+		public List<ClientConnection> Clients { get; } = new List<ClientConnection>();
+
 		public ServerConnection(int port)
 		{
 			Listen(port);
 		}
 
-		protected override void OnAccepted(Socket socket)
+		public new void Dispose()
 		{
-			Accepted?.Invoke(new ClientConnection(socket));
+			foreach (var client in Clients)
+				client.Dispose();
+
+			Close();
 		}
 
-		public event Action<ClientConnection> Accepted;
+		public ServerConnection ThatAccpetsClients()
+		{
+			_accpetsClients = true;
+			return this;
+		}
+
+		public ServerConnection ThatRejectsClients()
+		{
+			_accpetsClients = false;
+			return this;
+		}
+
+		protected override void OnAccepted(Socket socket)
+		{
+			if (!_accpetsClients) socket.Close();
+			else Clients.Add(new ClientConnection(socket));
+		}
 	}
 }

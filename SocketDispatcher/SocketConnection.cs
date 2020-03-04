@@ -34,15 +34,34 @@ namespace SocketDispatcher
 		{
 			_socket.Bind(new IPEndPoint(IPAddress.Any, port));
 			_socket.Listen(maxPendingConnections);
+
+			OnConnected();
+		}
+
+		protected void Close()
+		{
+			_socket.Close();
+
+			OnDisconnected();
 		}
 
 		protected void Connect(string host, int port)
 		{
-			_socket.ConnectAsync(host, port).ContinueWith(t => { _dispatcher.BeginInvoke(OnConnected); });
+			_socket.BeginConnect(host, port, r =>
+			{
+				if (_socket.Connected) _dispatcher.Invoke(new Action(OnConnected));
+				else _dispatcher.Invoke(new Action(OnConnectionFailed));
+			}, null);
+		}
+
+		protected void Disconnect()
+		{
+			_socket.BeginDisconnect(false, r => _dispatcher.Invoke(new Action(OnDisconnected)), null);
 		}
 
 		protected internal virtual void OnConnected() { }
 		protected internal virtual void OnDisconnected() { }
+		protected internal virtual void OnConnectionFailed() { }
 		protected virtual void OnAccepted(Socket socket)
 		{
 			socket.BeginDisconnect(false, null, null);

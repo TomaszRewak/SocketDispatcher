@@ -25,8 +25,5 @@ namespace SocketDispatcher.Test.Helpers
 
 			return dispatcher;
 		}
-
-		public static void Invoke(this Dispatcher dispatcher, Action action) => dispatcher.Invoke(action);
-		public static void BeginInvoke(this Dispatcher dispatcher, Action action) => dispatcher.BeginInvoke(action);
 	}
 }
