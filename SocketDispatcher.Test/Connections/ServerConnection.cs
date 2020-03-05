@@ -39,7 +39,12 @@ namespace SocketDispatcher.Test.Connections
 		protected override void OnAccepted(Socket socket)
 		{
 			if (!_accpetsClients) socket.Close();
-			else Clients.Add(new ClientConnection(socket));
+			else
+			{
+				var client = new ClientConnection(socket);
+				if (MessageTerminator.HasValue) client.ThatAcceptsMessages(MessageTerminator.Value);
+				Clients.Add(client);
+			}
 		}
 	}
 }

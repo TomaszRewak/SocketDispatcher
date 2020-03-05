@@ -56,6 +56,7 @@ namespace SocketDispatcher
 
 		protected void Disconnect()
 		{
+			_socket.Shutdown(SocketShutdown.Both);
 			_socket.BeginDisconnect(false, r => _dispatcher.Invoke(new Action(OnDisconnected)), null);
 		}
 

@@ -9,17 +9,5 @@ namespace SocketDispatcher.Test.Connections
 	{
 		public ClientConnection(Socket socket) : base(socket)
 		{ }
-
-		protected override int Read(ReadOnlySpan<byte> data)
-		{
-			return data.Length;
-		}
-
-		public void Send(byte[] message)
-		{
-			var buffer = Write(message.Length);
-			message.CopyTo(buffer);
-			Flush();
-		}
 	}
 }

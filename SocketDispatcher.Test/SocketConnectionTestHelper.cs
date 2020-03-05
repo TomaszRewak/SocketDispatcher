@@ -4,6 +4,7 @@ using SocketDispatcher.Test.Connections;
 using SocketDispatcher.Test.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using System.Windows.Threading;
@@ -67,7 +68,12 @@ namespace SocketDispatcher.Test
 			_remoteConnections.Clear();
 		}
 
-		public void AssertClientsConnected()
+		private void SendFromClient(params byte[] data)
+		{
+			_remoteConnections.First().Connection.Send(data);
+		}
+
+		public void AwaitClientsConnected()
 		{
 			foreach (var remoteConnection in _remoteConnections)
 				ThreadHelper.Await(ref remoteConnection.Connection.Connected, true);
@@ -79,10 +85,20 @@ namespace SocketDispatcher.Test
 				ThreadHelper.Await(ref remoteConnection.Connection.Connected, false);
 		}
 
-		public void AssertClientsFailedToConnect()
+		public void AwaitClientsFailedToConnect()
 		{
 			foreach (var remoteConnection in _remoteConnections)
 				ThreadHelper.Await(ref remoteConnection.Connection.ConnectionFailed, true);
+		}
+
+		public void AwaitServerBuffered(params byte[] bytes)
+		{
+			ThreadHelper.Await(ref _serverConnections.First().Connection.Clients.First().Buffer, bytes);
+		}
+
+		public void AwaitServerReceived(params byte[] bytes)
+		{
+			ThreadHelper.Await(ref _serverConnections.First().Connection.Clients.First().LastMessage, bytes);
 		}
 	}
 }

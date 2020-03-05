@@ -19,7 +19,7 @@ namespace SocketDispatcher.Test
 			StartServer(9090).ThatAccpetsClients();
 			StartClient(9090);
 
-			AssertClientsConnected();
+			AwaitClientsConnected();
 		}
 
 		[Test]
@@ -27,18 +27,57 @@ namespace SocketDispatcher.Test
 		{
 			StartClient(9090);
 
-			AssertClientsFailedToConnect();
+			AwaitClientsFailedToConnect();
 		}
 
 		[Test]
-		public void ClientDisconnectsFromDisconnectedServer()
+		public void ServerReceivesDataFromClient()
 		{
 			StartServer(9090).ThatAccpetsClients();
 			StartClient(9090);
+			AwaitClientsConnected();
 
-			AssertClientsConnected();
-			StopServers();
-			AssertClientsNotConnected();
+			SendFromClient(1, 2, 3, 4);
+
+			AwaitServerBuffered(1, 2, 3, 4);
+		}
+
+		[Test]
+		public void ServerAccpetsMessagesFromClient()
+		{
+			StartServer(9090).ThatAccpetsClients().ThatAcceptsMessages(0);
+			StartClient(9090);
+			AwaitClientsConnected();
+
+			SendFromClient(1, 2, 0, 3, 4, 0);
+
+			AwaitServerReceived(3, 4, 0);
+		}
+
+		[Test]
+		public void ServerBuffersIncompleteMessages()
+		{
+			StartServer(9090).ThatAccpetsClients().ThatAcceptsMessages(0);
+			StartClient(9090);
+			AwaitClientsConnected();
+
+			SendFromClient(1, 2, 0, 3, 4);
+
+			AwaitServerReceived(1, 2, 0);
+			AwaitServerBuffered(3, 4);
+		}
+		
+		[Test]
+		public void ServerReceivesMultipleMessagesIntoSingleBuffer()
+		{
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090);
+			AwaitClientsConnected();
+
+			SendFromClient(1, 2);
+			SendFromClient(3, 4);
+
+			AwaitServerBuffered(1, 2, 3, 4);
 		}
 	}
 }

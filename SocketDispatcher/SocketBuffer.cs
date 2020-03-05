@@ -40,10 +40,12 @@ namespace SocketDispatcher
 		public void Pop(int bytes)
 		{
 			_start += bytes;
+			_length -= bytes;
 		}
 
 		private void Reserve(int bytes)
 		{
+			if (_length == 0) _start = 0;
 			if (_buffer.Length >= _start + _length + bytes) return;
 
 			if (_buffer.Length >= _length + bytes)
@@ -54,6 +56,8 @@ namespace SocketDispatcher
 				Buffer.BlockCopy(_buffer, _start, newBuffer, 0, _length);
 				_buffer = newBuffer;
 			}
+
+			_start = 0;
 		}
 	}
 }
