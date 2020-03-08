@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
 using System.Windows;
 using System.Windows.Interop;
 

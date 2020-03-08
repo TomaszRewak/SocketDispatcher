@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SocketDispatcher
 {
 	internal sealed class SocketBuffer
 	{
-		private readonly List<ArraySegment<byte>> _segments = new List<ArraySegment<byte>> { new ArraySegment<byte>() };
-
 		private byte[] _buffer = new byte[0];
 		private int _start = 0;
 		private int _length = 0;

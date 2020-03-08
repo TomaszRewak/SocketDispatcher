@@ -65,8 +65,8 @@ namespace SocketDispatcher.Test.Connections
 			return data.Length - buffer.Length;
 		}
 
-		protected override void OnConnected() => Connected = true;
-		protected override void OnDisconnected() => Connected = false;
-		protected override void OnConnectionFailed() => ConnectionFailed = true;
+		protected internal override void OnConnected() => Connected = true;
+		protected internal override void OnDisconnected() => Connected = false;
+		protected internal override void OnConnectionFailed() => ConnectionFailed = true;
 	}
 }

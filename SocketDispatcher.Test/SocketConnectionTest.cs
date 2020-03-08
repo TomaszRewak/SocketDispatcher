@@ -182,8 +182,8 @@ namespace SocketDispatcher.Test
 			SendFromServer(client: 0, data: new byte[] { 1, 2, 3 });
 			SendFromServer(client: 1, data: new byte[] { 4, 5, 6 });
 
-			AwaitClientReceived(client: 0, data: new byte[] { 1, 2, 3 });
-			AwaitClientReceived(client: 1, data: new byte[] { 4, 5, 6 });
+			AwaitClientBuffered(client: 0, data: new byte[] { 1, 2, 3 });
+			AwaitClientBuffered(client: 1, data: new byte[] { 4, 5, 6 });
 		}
 
 		[Test]
