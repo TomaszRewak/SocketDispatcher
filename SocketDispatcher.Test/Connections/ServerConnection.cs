@@ -7,7 +7,7 @@ namespace SocketDispatcher.Test.Connections
 {
 	internal sealed class ServerConnection : BaseConnection
 	{
-		private bool _accpetsClients = true;
+		private bool _accpetsClients = false;
 
 		public List<ClientConnection> Clients { get; } = new List<ClientConnection>();
 
@@ -27,12 +27,6 @@ namespace SocketDispatcher.Test.Connections
 		public ServerConnection ThatAccpetsClients()
 		{
 			_accpetsClients = true;
-			return this;
-		}
-
-		public ServerConnection ThatRejectsClients()
-		{
-			_accpetsClients = false;
 			return this;
 		}
 

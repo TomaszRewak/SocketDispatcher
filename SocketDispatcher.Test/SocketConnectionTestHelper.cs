@@ -36,7 +36,7 @@ namespace SocketDispatcher.Test
 
 		private ServerConnection StartServer(int port, bool onCommonDispatcher = false)
 		{
-			var dispatcher = onCommonDispatcher ? DispatcherHelper.Spawn() : _commonDispatcher;
+			var dispatcher = onCommonDispatcher ? _commonDispatcher : DispatcherHelper.Spawn();
 			var serverConnection = dispatcher.Invoke(() => new ServerConnection(port));
 
 			_serverConnections.Add((serverConnection, dispatcher));
@@ -44,9 +44,9 @@ namespace SocketDispatcher.Test
 			return serverConnection;
 		}
 
-		private RemoteConnection StartClient(int port)
+		private RemoteConnection StartClient(int port, bool onCommonDispatcher = false)
 		{
-			var dispatcher = DispatcherHelper.Spawn();
+			var dispatcher = onCommonDispatcher ? _commonDispatcher : DispatcherHelper.Spawn();
 			var remoteConnection = dispatcher.Invoke(() => new RemoteConnection("localhost", port));
 
 			_remoteConnections.Add((remoteConnection, dispatcher));
@@ -108,6 +108,11 @@ namespace SocketDispatcher.Test
 		public void AwaitServerReceived(byte[] data)
 		{
 			ThreadHelper.Await(ref _serverConnections.First().Connection.Clients.First().LastMessage, data);
+		}
+
+		public void AwaitClientBuffered(byte[] data, int client = 0)
+		{
+			ThreadHelper.Await(ref _remoteConnections[client].Connection.Buffer, data);
 		}
 
 		public void AwaitClientReceived(byte[] data, int client = 0)

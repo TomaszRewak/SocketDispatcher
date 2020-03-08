@@ -148,5 +148,56 @@ namespace SocketDispatcher.Test
 			AwaitServerBuffered(server: 0, data: new byte[] { 1, 2, 3 });
 			AwaitServerBuffered(server: 1, data: new byte[] { 4, 5, 6 });
 		}
+
+		[Test]
+		public void TwoServersCannotListenOnTheSamePort()
+		{
+			StartServer(9090);
+
+			Assert.Throws<SocketException>(() => StartServer(9090));
+		}
+
+		[Test]
+		public void ClientCanSendAndReceiveMessagesAtTheSameTime()
+		{
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090);
+			AwaitClientsConnected();
+
+			SendFromClient(new byte[] { 1, 2, 3 });
+			SendFromServer(new byte[] { 4, 5, 6 });
+
+			AwaitServerBuffered(new byte[] { 1, 2, 3 });
+			AwaitClientBuffered(new byte[] { 4, 5, 6 });
+		}
+
+		[Test]
+		public void TwoClientsCanRunOnTheSameDispatcher()
+		{
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090, onCommonDispatcher: true);
+			StartClient(9090, onCommonDispatcher: true);
+			AwaitClientsConnected();
+
+			SendFromServer(client: 0, data: new byte[] { 1, 2, 3 });
+			SendFromServer(client: 1, data: new byte[] { 4, 5, 6 });
+
+			AwaitClientReceived(client: 0, data: new byte[] { 1, 2, 3 });
+			AwaitClientReceived(client: 1, data: new byte[] { 4, 5, 6 });
+		}
+
+		[Test]
+		public void ClientAndServerCanRunOnTheSameDispatcher()
+		{
+			StartServer(9090, onCommonDispatcher: true).ThatAccpetsClients();
+			StartClient(9090, onCommonDispatcher: true);
+			AwaitClientsConnected();
+
+			SendFromClient(client: 0, data: new byte[] { 1, 2, 3 });
+			SendFromServer(client: 0, data: new byte[] { 4, 5, 6 });
+
+			AwaitClientBuffered(new byte[] { 4, 5, 6 });
+			AwaitServerBuffered(new byte[] { 1, 2, 3 });
+		}
 	}
 }
