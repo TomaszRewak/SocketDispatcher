@@ -13,12 +13,14 @@ namespace SocketDispatcher.Test
 {
 	public partial class SocketConnectionTest
 	{
-		List<(ServerConnection Connection, Dispatcher Dispatcher)> _serverConnections;
-		List<(RemoteConnection Connection, Dispatcher Dispatcher)> _remoteConnections;
+		private Dispatcher _commonDispatcher;
+		private List<(ServerConnection Connection, Dispatcher Dispatcher)> _serverConnections;
+		private List<(RemoteConnection Connection, Dispatcher Dispatcher)> _remoteConnections;
 
 		[SetUp]
 		public void SetUp()
 		{
+			_commonDispatcher = DispatcherHelper.Spawn();
 			_serverConnections = new List<(ServerConnection, Dispatcher)>();
 			_remoteConnections = new List<(RemoteConnection, Dispatcher)>();
 		}
@@ -28,11 +30,13 @@ namespace SocketDispatcher.Test
 		{
 			StopClients();
 			StopServers();
+
+			_commonDispatcher.InvokeShutdown();
 		}
 
-		private ServerConnection StartServer(int port)
+		private ServerConnection StartServer(int port, bool onCommonDispatcher = false)
 		{
-			var dispatcher = DispatcherHelper.Spawn();
+			var dispatcher = onCommonDispatcher ? DispatcherHelper.Spawn() : _commonDispatcher;
 			var serverConnection = dispatcher.Invoke(() => new ServerConnection(port));
 
 			_serverConnections.Add((serverConnection, dispatcher));
@@ -68,9 +72,14 @@ namespace SocketDispatcher.Test
 			_remoteConnections.Clear();
 		}
 
-		private void SendFromClient(params byte[] data)
+		private void SendFromClient(byte[] data, int client = 0)
 		{
-			_remoteConnections.First().Connection.Send(data);
+			_remoteConnections[client].Connection.Send(data);
+		}
+
+		private void SendFromServer(byte[] data, int client = 0)
+		{
+			_serverConnections.First().Connection.Clients[client].Send(data);
 		}
 
 		public void AwaitClientsConnected()
@@ -79,7 +88,7 @@ namespace SocketDispatcher.Test
 				ThreadHelper.Await(ref remoteConnection.Connection.Connected, true);
 		}
 
-		public void AssertClientsNotConnected()
+		public void AwaitClientsNotConnected()
 		{
 			foreach (var remoteConnection in _remoteConnections)
 				ThreadHelper.Await(ref remoteConnection.Connection.Connected, false);
@@ -91,14 +100,19 @@ namespace SocketDispatcher.Test
 				ThreadHelper.Await(ref remoteConnection.Connection.ConnectionFailed, true);
 		}
 
-		public void AwaitServerBuffered(params byte[] bytes)
+		public void AwaitServerBuffered(byte[] data, int client = 0, int server = 0)
 		{
-			ThreadHelper.Await(ref _serverConnections.First().Connection.Clients.First().Buffer, bytes);
+			ThreadHelper.Await(ref _serverConnections[server].Connection.Clients[client].Buffer, data);
 		}
 
-		public void AwaitServerReceived(params byte[] bytes)
+		public void AwaitServerReceived(byte[] data)
 		{
-			ThreadHelper.Await(ref _serverConnections.First().Connection.Clients.First().LastMessage, bytes);
+			ThreadHelper.Await(ref _serverConnections.First().Connection.Clients.First().LastMessage, data);
+		}
+
+		public void AwaitClientReceived(byte[] data, int client = 0)
+		{
+			ThreadHelper.Await(ref _remoteConnections[client].Connection.LastMessage, data);
 		}
 	}
 }

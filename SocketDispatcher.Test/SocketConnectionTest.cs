@@ -37,9 +37,9 @@ namespace SocketDispatcher.Test
 			StartClient(9090);
 			AwaitClientsConnected();
 
-			SendFromClient(1, 2, 3, 4);
+			SendFromClient(new byte[] { 1, 2, 3, 4 });
 
-			AwaitServerBuffered(1, 2, 3, 4);
+			AwaitServerBuffered(new byte[] { 1, 2, 3, 4 });
 		}
 
 		[Test]
@@ -49,9 +49,9 @@ namespace SocketDispatcher.Test
 			StartClient(9090);
 			AwaitClientsConnected();
 
-			SendFromClient(1, 2, 0, 3, 4, 0);
+			SendFromClient(new byte[] { 1, 2, 0, 3, 4, 0 });
 
-			AwaitServerReceived(3, 4, 0);
+			AwaitServerReceived(new byte[] { 3, 4, 0 });
 		}
 
 		[Test]
@@ -61,12 +61,12 @@ namespace SocketDispatcher.Test
 			StartClient(9090);
 			AwaitClientsConnected();
 
-			SendFromClient(1, 2, 0, 3, 4);
+			SendFromClient(new byte[] { 1, 2, 0, 3, 4 });
 
-			AwaitServerReceived(1, 2, 0);
-			AwaitServerBuffered(3, 4);
+			AwaitServerReceived(new byte[] { 1, 2, 0 });
+			AwaitServerBuffered(new byte[] { 3, 4 });
 		}
-		
+
 		[Test]
 		public void ServerReceivesMultipleMessagesIntoSingleBuffer()
 		{
@@ -74,10 +74,79 @@ namespace SocketDispatcher.Test
 			StartClient(9090);
 			AwaitClientsConnected();
 
-			SendFromClient(1, 2);
-			SendFromClient(3, 4);
+			SendFromClient(new byte[] { 1, 2 });
+			SendFromClient(new byte[] { 3, 4 });
 
-			AwaitServerBuffered(1, 2, 3, 4);
+			AwaitServerBuffered(new byte[] { 1, 2, 3, 4 });
+		}
+
+		[Test]
+		public void ClientDisconnectsOnRequestFromServer()
+		{
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090).ThatTerminatesConnection(9);
+			AwaitClientsConnected();
+
+			SendFromServer(new byte[] { 1, 2, 3, 9 });
+
+			AwaitClientsNotConnected();
+		}
+
+		[Test]
+		public void ServerCanAcceptMultipleClients()
+		{
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090);
+			StartClient(9090);
+
+			AwaitClientsConnected();
+		}
+
+		[Test]
+		public void EachClientReceivesItsOwnMessage()
+		{
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090).ThatAcceptsMessages(0);
+			StartClient(9090).ThatAcceptsMessages(0);
+			AwaitClientsConnected();
+
+			SendFromServer(client: 0, data: new byte[] { 1, 2, 3, 0 });
+			SendFromServer(client: 1, data: new byte[] { 4, 5, 6, 0 });
+
+			AwaitClientReceived(client: 0, data: new byte[] { 1, 2, 3, 0 });
+			AwaitClientReceived(client: 1, data: new byte[] { 4, 5, 6, 0 });
+		}
+
+		[Test]
+		public void EachClientSendsItsOwnMessage()
+		{
+			StartServer(9090).ThatAccpetsClients();
+			StartClient(9090);
+			StartClient(9090);
+			AwaitClientsConnected();
+
+			SendFromClient(client: 0, data: new byte[] { 1, 2, 3 });
+			SendFromClient(client: 1, data: new byte[] { 4, 5, 6 });
+
+			AwaitServerBuffered(client: 0, data: new byte[] { 1, 2, 3 });
+			AwaitServerBuffered(client: 1, data: new byte[] { 4, 5, 6 });
+		}
+
+		[Test]
+		public void TwoServersCanRunOnASingleDispatcher()
+		{
+			StartServer(9090, onCommonDispatcher: true).ThatAccpetsClients();
+			StartServer(9091, onCommonDispatcher: true).ThatAccpetsClients();
+
+			StartClient(9090);
+			StartClient(9091);
+			AwaitClientsConnected();
+
+			SendFromClient(client: 0, data: new byte[] { 1, 2, 3 });
+			SendFromClient(client: 1, data: new byte[] { 4, 5, 6 });
+
+			AwaitServerBuffered(server: 0, data: new byte[] { 1, 2, 3 });
+			AwaitServerBuffered(server: 1, data: new byte[] { 4, 5, 6 });
 		}
 	}
 }

@@ -8,6 +8,7 @@ namespace SocketDispatcher.Test.Connections
 	internal abstract class BaseConnection : SocketConnection
 	{
 		protected byte? MessageTerminator;
+		protected byte? ConnectionTerminator;
 
 		public bool Connected;
 		public bool ConnectionFailed;
@@ -30,6 +31,12 @@ namespace SocketDispatcher.Test.Connections
 			return this;
 		}
 
+		public BaseConnection ThatTerminatesConnection(byte connectionTerminator)
+		{
+			ConnectionTerminator = connectionTerminator;
+			return this;
+		}
+
 		public void Send(params byte[] data)
 		{
 			var buffer = Write(data.Length);
@@ -48,6 +55,11 @@ namespace SocketDispatcher.Test.Connections
 					LastMessage = buffer.Slice(0, length).ToArray();
 					buffer = buffer.Slice(length);
 				}
+			}
+			if (ConnectionTerminator.HasValue)
+			{
+				if (buffer.Contains(ConnectionTerminator.Value))
+					Disconnect();
 			}
 			Buffer = buffer.ToArray();
 			return data.Length - buffer.Length;
