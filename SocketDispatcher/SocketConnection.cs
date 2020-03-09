@@ -74,7 +74,7 @@ namespace SocketDispatcher
 		protected virtual int Read(ReadOnlySpan<byte> data) => data.Length;
 		protected Span<byte> Write(int bytes) => _writeBuffer.Write(bytes);
 
-		public void Flush()
+		protected internal void Flush()
 		{
 			_writeBuffer.Read(out var segment);
 			int sentBytes = _socket.Send(segment.Array, segment.Offset, segment.Count, SocketFlags.None);
