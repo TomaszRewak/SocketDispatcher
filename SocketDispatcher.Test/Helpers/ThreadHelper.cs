@@ -15,7 +15,7 @@ namespace SocketDispatcher.Test.Helpers
 			var stopwatch = new Stopwatch();
 			stopwatch.Start();
 
-			while (value == default)
+			while (Equals(value, default(T)))
 			{
 				if (stopwatch.Elapsed > timeout) throw new TimeoutException();
 				Thread.Sleep(1);

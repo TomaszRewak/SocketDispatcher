@@ -27,7 +27,7 @@ namespace SocketDispatcher
 		private void ThreadFilterMessage(ref MSG msg, ref bool handled)
 		{
 			if (msg.hwnd != _messageHendler.Handle) return;
-			if (msg.message != 12345) return;
+			if (msg.message != MessageMagic) return;
 			if (!_sockets.TryGetValue(msg.wParam, out var socket)) return;
 
 			var events = (NetworkEvents)(msg.lParam.ToInt32() & 0b1111_1111_1111_1111);
@@ -64,6 +64,8 @@ namespace SocketDispatcher
 			}
 		}
 
+		private const int MessageMagic = 12345;
+
 		[Flags]
 		private enum NetworkEvents
 		{
@@ -85,6 +87,6 @@ namespace SocketDispatcher
 		[DllImport("wsock32.dll")]
 		private static extern int WSAAsyncSelect(IntPtr socket, IntPtr hWnd, int wMsg, int lEvent);
 
-		private int SelectAsync(IntPtr socketHandle, NetworkEvents events) => WSAAsyncSelect(socketHandle, _messageHendler.Handle, 12345, (int)events);
+		private int SelectAsync(IntPtr socketHandle, NetworkEvents events) => WSAAsyncSelect(socketHandle, _messageHendler.Handle, MessageMagic, (int)events);
 	}
 }
